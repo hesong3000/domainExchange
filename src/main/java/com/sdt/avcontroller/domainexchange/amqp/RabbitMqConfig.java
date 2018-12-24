@@ -1,6 +1,9 @@
 package com.sdt.avcontroller.domainexchange.amqp;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.rabbitmq.client.Channel;
+import com.sdt.avcontroller.domainexchange.base.MsgHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.ExchangeTypes;
@@ -10,6 +13,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +27,8 @@ public class RabbitMqConfig {
     private String localDomainQueueName;
     @Value("${spring.rabbitmq.remote_domain.queue}")
     private String remoteDomainQueueName;
+    @Autowired
+    MsgHolder msgHolder;
 
     @Bean(name="localDomainConnectionFactory")
     @Primary
@@ -77,7 +83,10 @@ public class RabbitMqConfig {
             if(null != body) {
                 try {
                     String msg = new String(body);
-                    System.out.println("execlocal"+msg);
+                    JSONObject requestMsg = JSON.parseObject(msg);
+                    //增加接收queueName，后续使用
+                    requestMsg.put("recvQueueName", localDomainQueueName);
+                    msgHolder.pushMsg(requestMsg.toJSONString());
                 } catch(Exception e) {
                     e.printStackTrace();
                 }
@@ -96,7 +105,10 @@ public class RabbitMqConfig {
             if(null != body) {
                 try {
                     String msg = new String(body);
-                    System.out.println("execremote"+msg);
+                    JSONObject requestMsg = JSON.parseObject(msg);
+                    //增加接收queueName，后续使用
+                    requestMsg.put("recvQueueName", remoteDomainQueueName);
+                    msgHolder.pushMsg(requestMsg.toJSONString());
                 } catch(Exception e) {
                     e.printStackTrace();
                 }

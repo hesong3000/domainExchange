@@ -8,12 +8,14 @@ spring:
       port: 5672
       username: sdt
       password: sdt108
-      queue:  domain_115_upto_domain_132
+      queue:  domain_115_to_domain_132
+      avail-dst-domain: domain_132
+      self-domain: domain_115
       virtual-host: /domainExchange
     remote_domain:
       host: 10.26.14.132
       port: 5672
       username: sdt
       password: sdt108
-      queue: domain_132_downto_115
+      queue: domain_132_to_domain_115
       virtual-host: /domainExchange
