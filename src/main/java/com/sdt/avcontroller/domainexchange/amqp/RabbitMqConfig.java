@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class RabbitMqConfig {
-    private static Logger log = LoggerFactory.getLogger(RabbitMqConfig.class);
+    private static Logger logger = LoggerFactory.getLogger(RabbitMqConfig.class);
     @Value("${spring.rabbitmq.local_domain.queue}")
     private String localDomainQueueName;
     @Value("${spring.rabbitmq.remote_domain.queue}")
@@ -85,6 +85,7 @@ public class RabbitMqConfig {
                     String msg = new String(body);
                     JSONObject requestMsg = JSON.parseObject(msg);
                     //增加接收queueName，后续使用
+                    logger.info("recv from {}, msg {}",localDomainQueueName,msg);
                     requestMsg.put("recvQueueName", localDomainQueueName);
                     msgHolder.pushMsg(requestMsg.toJSONString());
                 } catch(Exception e) {
@@ -107,6 +108,7 @@ public class RabbitMqConfig {
                     String msg = new String(body);
                     JSONObject requestMsg = JSON.parseObject(msg);
                     //增加接收queueName，后续使用
+                    logger.info("recv from {}, msg {}",remoteDomainQueueName,msg);
                     requestMsg.put("recvQueueName", remoteDomainQueueName);
                     msgHolder.pushMsg(requestMsg.toJSONString());
                 } catch(Exception e) {
@@ -124,6 +126,7 @@ public class RabbitMqConfig {
         try {
             Channel channel = connectionFactory.createConnection().createChannel(false);
             channel.queueDeclare(localDomainQueueName, false, false, false, null);
+            channel.queuePurge(localDomainQueueName);
             channel.exchangeDeclare("domainExchange", ExchangeTypes.FANOUT,true);
             channel.queueBind(localDomainQueueName,"domainExchange","");
         }catch (Exception e){
@@ -139,6 +142,7 @@ public class RabbitMqConfig {
         try {
             Channel channel = connectionFactory.createConnection().createChannel(false);
             channel.queueDeclare(remoteDomainQueueName, false, false, false, null);
+            channel.queuePurge(remoteDomainQueueName);
             channel.exchangeDeclare("domainExchange", ExchangeTypes.FANOUT,true);
             channel.queueBind(remoteDomainQueueName,"domainExchange","");
         }catch (Exception e){

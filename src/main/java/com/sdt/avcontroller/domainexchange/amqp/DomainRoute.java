@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class DomainRoute implements Serializable {
+    public DomainRoute(){}
     public DomainRoute(DomainRoute domainRoute){
         this.isBroadcast = domainRoute.isBroadcast();
         int size = domainRoute.getDomainRoute().size();
@@ -13,11 +14,11 @@ public class DomainRoute implements Serializable {
         }
     }
 
-    public boolean isBroadcast() {
+    public Boolean isBroadcast() {
         return isBroadcast;
     }
 
-    public void setBroadcast(boolean broadcast) {
+    public void setBroadcast(Boolean broadcast) {
         isBroadcast = broadcast;
     }
 
@@ -43,7 +44,7 @@ public class DomainRoute implements Serializable {
         domainRoute.remove(0);
     }
 
-    private boolean isBroadcast = false;
+    private Boolean isBroadcast = false;
 
     public List<String> getDomainRoute() {
         return domainRoute;
