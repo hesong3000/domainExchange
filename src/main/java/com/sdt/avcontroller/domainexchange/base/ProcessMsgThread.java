@@ -33,7 +33,7 @@ public class ProcessMsgThread extends Thread{
 
     private final String outerExchangeName = "domainExchange";
     private final String innerExchangeName = "licodeExchange";
-    private final String innerRoutekey = "wktest_key";
+    private final String innerRoutekey = "RC_binding_key";
 
     @Autowired
     private MsgHolder msgHolder;
@@ -42,7 +42,6 @@ public class ProcessMsgThread extends Thread{
         while(!Thread.currentThread().isInterrupted()){
             try {
                 String msg = msgHolder.popMsg();
-                logger.info("recv msg {}", msg);
                 JSONObject jsonObject = JSON.parseObject(msg);
                 String recvQueueName = jsonObject.getString("recvQueueName");
                 JSONArray domain_route = jsonObject.getJSONArray("domain_route");
@@ -80,6 +79,7 @@ public class ProcessMsgThread extends Thread{
     private void ProcBroadcastMsg(JSONObject jsonObject){
         String recvQueueName = jsonObject.getString("recvQueueName");
         //如果此条消息来自远端
+        logger.info("recv broadcast msg from queue: {}, msg: {}", recvQueueName, jsonObject);
         if(recvQueueName.compareTo(remote_domain_queue)==0){
             //1、先把此消息发到本域内网
             String msgFromQueueName = jsonObject.getString("msgFromQueueName");
@@ -153,6 +153,8 @@ public class ProcessMsgThread extends Thread{
         @SuppressWarnings("unchecked")
         List<DomainRoute> recv_domain_list = domain_route.toJavaList(DomainRoute.class);
         String recvQueueName = jsonObject.getString("recvQueueName");
+        logger.info("recv direct msg from queue: {}, msg: {}", recvQueueName, jsonObject);
+
         jsonObject.remove("recvQueueName");
         int recv_domain_list_size = recv_domain_list.size();
         //如果此条消息来自自己的exchangequeue
@@ -166,7 +168,7 @@ public class ProcessMsgThread extends Thread{
                     //aval_dst_domain_id是目的DomainID
                     if(domainRoute.getRouteTTL()==1){
                         //如果下一跳Domain是本服务对应的远端Domain，且下一跳为终止Domian节点，则直接发送至远端的Domain内网交换机即可
-                        System.out.println("remoteDomainRabbitTemplate send msg "+jsonObject);
+                        logger.info("send msg to domain: {}, exchange: {}, msg: {}", aval_dst_domain_id, innerExchangeName, jsonObject);
                         remoteDomainRabbitTemplate.convertAndSend(innerExchangeName,innerRoutekey,jsonObject.toJSONString());
                     }else {
                         //如果下一跳是本服务对应的远端Domain，且下一跳不为终止Domain节点，则只保留header为本服务远端Domain的路由表（且删除header）
@@ -186,6 +188,7 @@ public class ProcessMsgThread extends Thread{
                             new_jsonObject.remove("domain_route");
                             JSONArray domain_array = JSONArray.parseArray(JSONObject.toJSONString(new_domain_list));
                             new_jsonObject.put("domain_route", domain_array);
+                            logger.info("send msg to domain: {}, exchange: {}, msg: {}", aval_dst_domain_id, outerExchangeName, jsonObject);
                             remoteDomainRabbitTemplate.convertAndSend(outerExchangeName,"",new_jsonObject.toJSONString());
                         }
                     }
@@ -201,6 +204,7 @@ public class ProcessMsgThread extends Thread{
                 if(headDomain.compareTo(self_domain_id)==0){
                     //如果消息路由的下一跳为自己，且为最终节点，则发送消息至本域内网
                     if(domainRoute.getRouteTTL()==1){
+                        logger.info("send msg to domain: {}, exchange: {}, msg: {}", self_domain_id, innerExchangeName, jsonObject);
                         localDomainRabbitTemplate.convertAndSend(innerExchangeName,innerRoutekey,jsonObject.toJSONString());
                     }else{
                         //只保留DomainRoute路由中HEAD是自己的路由
@@ -219,6 +223,7 @@ public class ProcessMsgThread extends Thread{
                             new_jsonObject.remove("domain_route");
                             JSONArray domain_array = JSONArray.parseArray(JSONObject.toJSONString(new_domain_list));
                             new_jsonObject.put("domain_route", domain_array);
+                            logger.info("send msg to domain: {}, exchange: {}, msg: {}", self_domain_id, outerExchangeName, jsonObject);
                             localDomainRabbitTemplate.convertAndSend(outerExchangeName,"",new_jsonObject.toJSONString());
                         }
                     }

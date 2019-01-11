@@ -1,6 +1,6 @@
 server:
   #端口号
-  port: 8888
+  port: 8090
 spring:
   rabbitmq:
     local_domain:
@@ -8,14 +8,14 @@ spring:
       port: 5672
       username: sdt
       password: sdt108
-      queue:  domain_115_to_domain_155
-      avail-dst-domain: domain_155
+      queue:  domain_115_to_domain_125
+      avail-dst-domain: domain_125
       self-domain: domain_115
       virtual-host: /domainExchange
     remote_domain:
-      host: 10.26.8.155
+      host: 10.25.8.125
       port: 5672
       username: sdt
       password: sdt108
-      queue: domain_155_to_domain_115
+      queue: domain_125_to_domain_115
       virtual-host: /domainExchange
